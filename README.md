@@ -1,10 +1,12 @@
 WARP Pool Next 0.2.0 是一个轻量 Linux WARP IPv6 代理池。推荐部署为一个 host 网络 Docker 容器，只有一个 SOCKS5 端口，通过不同用户名选择固定线路。每条线路使用一份独立 WARP 配置、一个内核 WireGuard 设备和源地址路由；整个池共享一个 Python 控制进程和一个 3proxy 进程。
 
-提供 Linux amd64、arm64 成品镜像和原生二进制包，编译全部在 GitHub Actions 完成，VPS 只拉取和运行。源码、镜像及发布包不包含实际账号、私钥或密码。前一版原生服务已完成 120 条真实线路验证；容器运行的资源应按实际部署重新测量。
+提供 Linux amd64、arm64 成品镜像和原生二进制包，编译全部在 GitHub Actions 完成，VPS 只拉取和运行。源码、镜像及发布包不包含实际账号、私钥或密码。0.2.0 已在 arm64 的 145 条线路及 amd64 的 36 条线路生产部署中逐条验证；后者迁移时保留了全部 36 个原出口 IPv6，并验证 107 份业务凭证的原线路绑定。公网地址以后仍可能由 Cloudflare 改变。
 
 **单容器部署**
 
 准备 Linux 内核 WireGuard。主机需要 Docker Compose；无需编译器。使用 `deploy/compose.yaml`，其中只有 `network_mode: host`，没有 `ports` 映射、Docker socket 挂载或 privileged 模式。代理使用容器内专门的 UID 41001，部署前确认宿主没有将同一 UID 用于其他业务。
+
+宿主还必须允许新创建的 WireGuard 接口使用 IPv6；检查 `net.ipv6.conf.default.disable_ipv6` 为 `0`。曾整体禁用 IPv6 的主机需要先处理这一前提，host 网络容器无法用独立网络命名空间绕过它。具体设置、迁移验收和故障处理见 [运维说明](docs/OPERATIONS.md)。
 
 将 Compose 文件放到自己的部署目录，例如 `/srv/warp-pool-next/compose.yaml`。先将已有 WARP 配置保存在 `/root/warp-profiles`，每份配置权限为 600，随后在部署目录运行：
 
@@ -64,7 +66,7 @@ docker compose logs --tail 20 warp-pool-next
 
 ```mermaid
 flowchart LR
-  U[业务：服务器:1080 + 用户名] --> P[一个 3proxy 进程]
+  U[业务：服务器:57603 + 用户名] --> P[一个 3proxy 进程]
   P -->|用户名 A 绑定源 IPv6 A| A[内核 WG 线路 A]
   P -->|用户名 B 绑定源 IPv6 B| B[内核 WG 线路 B]
   A --> EA[WARP 公网 IPv6 A]
@@ -221,6 +223,6 @@ sudo systemctl start warp-pool-next@main
 - 3proxy 在有流量时通常每连接一个线程；集中监听降低的是常驻成本。大量真实并发仍会消耗线程、内存与加密 CPU，需结合实际业务调整连接数限制。
 - 目前按配置接受最多 2048 条候选线路，这是校验范围，不能视为已做过 2048 条容量验收。实际实测范围见配套报告。
 - 健康探测依赖 Cloudflare HTTPS trace，失败会重试；代理 DNS 依赖所配置的 DNS 服务。没有引入多节点控制平台、面板或分布式注册服务。
-- 生产迁移需核对旧端口、凭据、账号固定绑定、HAProxy/watchdog 控制权及业务可达性。同一 WARP 私钥不要在新旧实现中并行建立活跃隧道。旧配置和容器应保留供回退；本项目不会自动迁移或删除它们。
+- 生产迁移需核对旧端口、凭据、账号固定绑定、HAProxy/watchdog 控制权及业务可达性。同一 WARP 私钥不要在新旧实现中并行建立活跃隧道。切换验收前保留旧配置和停止状态的容器供回退；验收通过后可以按自己的清理计划移除旧容器，并将必要的原配置保存在私有备份中。本项目不会自动迁移或删除它们。
 
 本地配置与状态机验证：在项目根目录运行 `python3 -m unittest discover -s tests -v`。网络隔离、真实出口、热更新、故障恢复与资源数据来自甲骨文独立实验，详见配套报告。
