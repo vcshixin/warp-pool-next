@@ -1,0 +1,13 @@
+.git
+**/__pycache__
+**/*.pyc
+.env
+.env.*
+config
+state
+private
+prepared-3proxy
+build-3proxy
+build
+dist
+**/*.log

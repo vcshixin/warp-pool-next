@@ -1,0 +1,39 @@
+{
+  "instance": "example",
+  "state_dir": "/var/lib/warp-pool-next/example",
+  "proxy_binary": "/opt/warp-pool-next/bin/3proxy",
+  "wg_binary": "/usr/bin/wg",
+  "listen": "127.0.0.1",
+  "mode": "users",
+  "exit_policy": "follow_line",
+  "port": 1080,
+  "proxy_user": "warpnext",
+  "health_interval": 300,
+  "repair_interval": 30,
+  "probe_timeout": 8,
+  "probe_workers": 4,
+  "failures_before_down": 2,
+  "min_unique_exits": 2,
+  "max_connections": 1024,
+  "per_port_connections": 64,
+  "table_base": 61000,
+  "rule_base": 20000,
+  "dns_server": "1.1.1.1",
+  "random_users": [],
+  "lines": [
+    {
+      "id": 1,
+      "username": "warp-0001",
+      "password_file": "passwords/0001",
+      "profile": "profiles/0001.conf",
+      "enabled": true
+    },
+    {
+      "id": 2,
+      "username": "warp-0002",
+      "password_file": "passwords/0002",
+      "profile": "profiles/0002.conf",
+      "enabled": true
+    }
+  ]
+}

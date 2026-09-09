@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+/config/
+/state/
+/private/
+/prepared-3proxy/
+/build-3proxy/
+/build/
+/dist/
+*.log

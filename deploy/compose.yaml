@@ -1,0 +1,40 @@
+services:
+  warp-pool-next:
+    image: ${WARP_POOL_IMAGE:-ghcr.io/vcshixin/warp-pool-next:latest}
+    container_name: warp-pool-next
+    network_mode: host
+    restart: unless-stopped
+    stop_grace_period: 120s
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SETUID
+      - SETGID
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - KILL
+    volumes:
+      - ./config:/etc/warp-pool-next:ro
+      - ./state:/var/lib/warp-pool-next
+    tmpfs:
+      - /run:rw,nosuid,nodev,noexec,size=16m,mode=0755
+      - /tmp:rw,nosuid,nodev,noexec,size=16m,mode=1777
+    pids_limit: 2048
+    mem_limit: 512m
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 8192
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"

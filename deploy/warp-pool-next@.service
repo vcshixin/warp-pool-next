@@ -1,0 +1,47 @@
+[Unit]
+Description=WARP IPv6 pool %i
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/warp-pool-next
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+ExecStartPre=/usr/bin/python3 -m warp_pool --config /etc/warp-pool-next/%i/config.json check
+ExecStart=/usr/bin/python3 -m warp_pool --config /etc/warp-pool-next/%i/config.json run
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=15
+KillMode=mixed
+TimeoutStartSec=300
+TimeoutStopSec=120
+UMask=0077
+StateDirectory=warp-pool-next/%i
+StateDirectoryMode=0700
+RuntimeDirectory=warp-pool-next-%i
+RuntimeDirectoryMode=0750
+CPUAccounting=true
+MemoryAccounting=true
+TasksAccounting=true
+MemoryMax=512M
+TasksMax=2048
+LimitNOFILE=8192
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_NETLINK AF_UNIX
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_KILL CAP_SETUID CAP_SETGID CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER
+
+[Install]
+WantedBy=multi-user.target
