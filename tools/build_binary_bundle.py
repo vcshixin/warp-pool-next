@@ -2,12 +2,14 @@
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 from pathlib import Path
 import platform
 import shutil
 import subprocess
 import sys
+import sysconfig
 import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +45,18 @@ def main():
         shutil.copytree(ROOT / name, source / name)
     (source / 'licenses').mkdir()
     shutil.copy2(ROOT / 'vendor/3proxy-LICENSE.txt', source / 'licenses/3proxy-LICENSE.txt')
+    python_license = Path(sysconfig.get_path('stdlib')) / 'LICENSE.txt'
+    assert python_license.is_file(), 'Python 运行时许可证缺失'
+    shutil.copy2(python_license, source / 'licenses/Python-LICENSE.txt')
+    installer = importlib.metadata.distribution('pyinstaller')
+    notices = [file for file in installer.files if file.name.lower().startswith(('copying', 'license'))]
+    assert notices, 'PyInstaller 打包例外说明缺失'
+    for index, file in enumerate(notices):
+        shutil.copy2(installer.locate_file(file), source / 'licenses' / f'PyInstaller-{index}-{file.name}')
+    # 原生运行库来自 Debian；同时携带该构建环境的版权说明以覆盖共享库依赖。
+    for file in sorted(Path('/usr/share/doc').glob('*/copyright')):
+        if file.is_file():
+            shutil.copy2(file, source / 'licenses' / ('Debian-' + file.parent.name + '.txt'))
     name = f'warp-pool-next-{version}-linux-{args.arch}'
     path = output / (name + '.tar.gz')
     with tarfile.open(path, 'w:gz') as archive:
